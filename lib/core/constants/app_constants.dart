@@ -15,6 +15,8 @@ class AppSetupItemDefinition {
 class AppConstants {
   AppConstants._();
 
+  static const currentOperatorName = 'Khaled';
+
   static const roomNames = <String>[
     'Room 001',
     'Room 002',

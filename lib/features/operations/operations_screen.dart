@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/router.dart';
+import '../notifications/providers/notifications_provider.dart';
 import '../others/others_screen.dart';
 import '../reserve/reserve_screen.dart';
 import '../snacky/snacky_screen.dart';
@@ -13,6 +15,7 @@ class OperationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final segment = ref.watch(operationsSegmentProvider);
+    final hasUnreadNotifications = ref.watch(hasUnreadNotificationsProvider);
 
     return SafeArea(
       bottom: false,
@@ -23,12 +26,9 @@ class OperationsScreen extends ConsumerWidget {
             onSegmentChanged: (value) {
               ref.read(operationsSegmentProvider.notifier).setSegment(value);
             },
+            hasUnreadNotifications: hasUnreadNotifications,
             onNotificationTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Notifications are UI-only in Phase 1.'),
-                ),
-              );
+              Navigator.pushNamed(context, AppRouter.notifications);
             },
           ),
           Expanded(

@@ -7,7 +7,8 @@ class TaskItem {
   const TaskItem({
     required this.id,
     required this.roomName,
-    required this.scheduledTime,
+    required this.prepareTime,
+    required this.collectTime,
     required this.category,
     required this.personsCount,
     required this.orderedDrinks,
@@ -20,7 +21,8 @@ class TaskItem {
 
   final String id;
   final String roomName;
-  final DateTime scheduledTime;
+  final DateTime prepareTime;
+  final DateTime collectTime;
   final TaskCategory category;
   final int? personsCount;
   final List<DrinkOrderItem> orderedDrinks;
@@ -33,7 +35,8 @@ class TaskItem {
   TaskItem copyWith({
     String? id,
     String? roomName,
-    DateTime? scheduledTime,
+    DateTime? prepareTime,
+    DateTime? collectTime,
     TaskCategory? category,
     int? personsCount,
     List<DrinkOrderItem>? orderedDrinks,
@@ -46,7 +49,8 @@ class TaskItem {
     return TaskItem(
       id: id ?? this.id,
       roomName: roomName ?? this.roomName,
-      scheduledTime: scheduledTime ?? this.scheduledTime,
+      prepareTime: prepareTime ?? this.prepareTime,
+      collectTime: collectTime ?? this.collectTime,
       category: category ?? this.category,
       personsCount: personsCount ?? this.personsCount,
       orderedDrinks: orderedDrinks ?? this.orderedDrinks,

@@ -9,11 +9,13 @@ class OperationsTopBar extends StatelessWidget {
     required this.selectedSegment,
     required this.onSegmentChanged,
     required this.onNotificationTap,
+    required this.hasUnreadNotifications,
   });
 
   final OperationsSegment selectedSegment;
   final ValueChanged<OperationsSegment> onSegmentChanged;
   final VoidCallback onNotificationTap;
+  final bool hasUnreadNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +41,27 @@ class OperationsTopBar extends StatelessWidget {
           const SizedBox(width: 8),
           IconButton(
             onPressed: onNotificationTap,
-            icon: const Icon(Icons.notifications_none_rounded),
             tooltip: 'Notifications',
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_none_rounded),
+                if (hasUnreadNotifications)
+                  Positioned(
+                    right: -1,
+                    top: -1,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD93025),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

@@ -29,7 +29,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   bool _isEditing = false;
 
   late String _roomNameDraft;
-  late DateTime _scheduledTimeDraft;
+  late DateTime _prepareTimeDraft;
+  late DateTime _collectTimeDraft;
   late TaskCategory _categoryDraft;
   late TaskStatus _statusDraft;
   late Map<String, int> _itemQuantities;
@@ -181,7 +182,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       color: Color(0xFF6E6E73),
                     ),
                     const SizedBox(width: 8),
-                    Text(currentTask.scheduledTime.hhMm),
+                    Text(
+                      'Prep ${currentTask.prepareTime.hhMm} · Collect ${currentTask.collectTime.hhMm}',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -197,7 +200,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 const _SectionTitle('Task Info'),
                 const SizedBox(height: 8),
                 _InfoRow(label: 'Room', value: currentTask.roomName),
-                _InfoRow(label: 'Time', value: currentTask.scheduledTime.hhMm),
+                _InfoRow(
+                  label: 'Prepare Time',
+                  value: currentTask.prepareTime.hhMm,
+                ),
+                _InfoRow(
+                  label: 'Collect Time',
+                  value: currentTask.collectTime.hhMm,
+                ),
                 _InfoRow(label: 'Category', value: currentTask.category.label),
                 if (currentTask.personsCount != null)
                   _InfoRow(
@@ -299,16 +309,16 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   },
                 ),
                 const SizedBox(height: 10),
-                InkWell(
-                  onTap: _pickTime,
-                  borderRadius: BorderRadius.circular(14),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Time',
-                      suffixIcon: Icon(Icons.schedule_outlined),
-                    ),
-                    child: Text(_scheduledTimeDraft.hhMm),
-                  ),
+                _EditableTimeField(
+                  labelText: 'Prepare Time',
+                  value: _prepareTimeDraft.hhMm,
+                  onTap: _pickPrepareTime,
+                ),
+                const SizedBox(height: 10),
+                _EditableTimeField(
+                  labelText: 'Collect Time',
+                  value: _collectTimeDraft.hhMm,
+                  onTap: _pickCollectTime,
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<TaskCategory>(
@@ -439,12 +449,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     );
   }
 
-  Future<void> _pickTime() async {
+  Future<void> _pickPrepareTime() async {
     final selected = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(
-        hour: _scheduledTimeDraft.hour,
-        minute: _scheduledTimeDraft.minute,
+        hour: _prepareTimeDraft.hour,
+        minute: _prepareTimeDraft.minute,
       ),
     );
     if (selected == null) {
@@ -452,10 +462,33 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     }
 
     setState(() {
-      _scheduledTimeDraft = DateTime(
-        _scheduledTimeDraft.year,
-        _scheduledTimeDraft.month,
-        _scheduledTimeDraft.day,
+      _prepareTimeDraft = DateTime(
+        _prepareTimeDraft.year,
+        _prepareTimeDraft.month,
+        _prepareTimeDraft.day,
+        selected.hour,
+        selected.minute,
+      );
+    });
+  }
+
+  Future<void> _pickCollectTime() async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: _collectTimeDraft.hour,
+        minute: _collectTimeDraft.minute,
+      ),
+    );
+    if (selected == null) {
+      return;
+    }
+
+    setState(() {
+      _collectTimeDraft = DateTime(
+        _prepareTimeDraft.year,
+        _prepareTimeDraft.month,
+        _prepareTimeDraft.day,
         selected.hour,
         selected.minute,
       );
@@ -479,6 +512,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final roomName = _roomNameDraft.trim();
     if (roomName.isEmpty) {
       _showError('Room is required.');
+      return;
+    }
+    if (!_collectTimeDraft.isAfter(_prepareTimeDraft)) {
+      _showError('Collect time must be after prepare time.');
       return;
     }
 
@@ -519,7 +556,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
     final updatedTask = currentTask.copyWith(
       roomName: roomName,
-      scheduledTime: _scheduledTimeDraft,
+      prepareTime: _prepareTimeDraft,
+      collectTime: _collectTimeDraft,
       category: _categoryDraft,
       personsCount: personsCount,
       orderedDrinks: orderedItems,
@@ -607,7 +645,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   void _syncDraftFromTask(TaskItem task) {
     _roomNameDraft = task.roomName;
-    _scheduledTimeDraft = task.scheduledTime;
+    _prepareTimeDraft = task.prepareTime;
+    _collectTimeDraft = task.collectTime;
     _categoryDraft = task.category;
     _statusDraft = task.status;
 
@@ -755,6 +794,33 @@ class _EditableItemDefinition {
 
   final String id;
   final String name;
+}
+
+class _EditableTimeField extends StatelessWidget {
+  const _EditableTimeField({
+    required this.labelText,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String labelText;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: labelText,
+          suffixIcon: const Icon(Icons.schedule_outlined),
+        ),
+        child: Text(value),
+      ),
+    );
+  }
 }
 
 class _SectionTitle extends StatelessWidget {

@@ -6,7 +6,8 @@ import '../../../core/constants/app_constants.dart';
 class FoodSetupFormState {
   const FoodSetupFormState({
     required this.selectedRoomId,
-    required this.selectedTime,
+    required this.selectedPrepareTime,
+    required this.selectedCollectTime,
     required this.personsInput,
     required this.itemQuantities,
   });
@@ -14,7 +15,8 @@ class FoodSetupFormState {
   factory FoodSetupFormState.initial() {
     return FoodSetupFormState(
       selectedRoomId: null,
-      selectedTime: null,
+      selectedPrepareTime: null,
+      selectedCollectTime: null,
       personsInput: '1',
       itemQuantities: {
         for (final item in AppConstants.foodSetupDefinitions) item.id: 0,
@@ -23,7 +25,8 @@ class FoodSetupFormState {
   }
 
   final String? selectedRoomId;
-  final TimeOfDay? selectedTime;
+  final TimeOfDay? selectedPrepareTime;
+  final TimeOfDay? selectedCollectTime;
   final String personsInput;
   final Map<String, int> itemQuantities;
 
@@ -39,14 +42,21 @@ class FoodSetupFormState {
 
   FoodSetupFormState copyWith({
     String? selectedRoomId,
-    TimeOfDay? selectedTime,
-    bool clearTime = false,
+    TimeOfDay? selectedPrepareTime,
+    bool clearPrepareTime = false,
+    TimeOfDay? selectedCollectTime,
+    bool clearCollectTime = false,
     String? personsInput,
     Map<String, int>? itemQuantities,
   }) {
     return FoodSetupFormState(
       selectedRoomId: selectedRoomId ?? this.selectedRoomId,
-      selectedTime: clearTime ? null : selectedTime ?? this.selectedTime,
+      selectedPrepareTime: clearPrepareTime
+          ? null
+          : selectedPrepareTime ?? this.selectedPrepareTime,
+      selectedCollectTime: clearCollectTime
+          ? null
+          : selectedCollectTime ?? this.selectedCollectTime,
       personsInput: personsInput ?? this.personsInput,
       itemQuantities: itemQuantities ?? this.itemQuantities,
     );
@@ -61,8 +71,12 @@ class FoodSetupFormNotifier extends Notifier<FoodSetupFormState> {
     state = state.copyWith(selectedRoomId: roomId);
   }
 
-  void setTime(TimeOfDay time) {
-    state = state.copyWith(selectedTime: time);
+  void setPrepareTime(TimeOfDay time) {
+    state = state.copyWith(selectedPrepareTime: time);
+  }
+
+  void setCollectTime(TimeOfDay time) {
+    state = state.copyWith(selectedCollectTime: time);
   }
 
   void setPersonsInput(String value) {

@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/extensions/date_time_extension.dart';
+import '../../notifications/providers/notifications_provider.dart';
 import '../../../models/derived_item.dart';
 import '../../../models/drink_order_item.dart';
 import '../../../models/task_category.dart';
@@ -8,48 +10,96 @@ import '../../../models/task_status.dart';
 
 class TasksNotifier extends Notifier<List<TaskItem>> {
   @override
-  List<TaskItem> build() => [..._sampleTasks]..sort(_byScheduledTime);
+  List<TaskItem> build() => [..._sampleTasks]..sort(_byPrepareTime);
 
   void addTask(TaskItem task) {
-    final updated = [...state, task]..sort(_byScheduledTime);
+    final updated = [...state, task]..sort(_byPrepareTime);
     state = updated;
+    _pushNotification(
+      title: 'Task added',
+      message:
+          '${task.roomName} · ${task.category.label} · Prep ${task.prepareTime.hhMm}',
+    );
   }
 
   void updateTaskStatus({required String taskId, required TaskStatus status}) {
+    final previousTask = _findTaskById(taskId);
     final updated = [
       for (final task in state)
         if (task.id == taskId) task.copyWith(status: status) else task,
-    ]..sort(_byScheduledTime);
+    ]..sort(_byPrepareTime);
     state = updated;
+
+    if (previousTask != null && previousTask.status != status) {
+      _pushNotification(
+        title: 'Task status changed',
+        message:
+            '${previousTask.roomName} changed from ${previousTask.status.label} to ${status.label}.',
+      );
+    }
   }
 
   void updateTask(TaskItem updatedTask) {
+    final previousTask = _findTaskById(updatedTask.id);
     final updated = [
       for (final task in state)
         if (task.id == updatedTask.id) updatedTask else task,
-    ]..sort(_byScheduledTime);
+    ]..sort(_byPrepareTime);
     state = updated;
+
+    final suffix =
+        previousTask != null && previousTask.status != updatedTask.status
+        ? ' Status: ${updatedTask.status.label}.'
+        : '';
+    _pushNotification(
+      title: 'Task updated',
+      message: '${updatedTask.roomName} was updated.$suffix',
+    );
   }
 
   void deleteTask(String taskId) {
+    final deletedTask = _findTaskById(taskId);
     state = [
       for (final task in state)
         if (task.id != taskId) task,
-    ]..sort(_byScheduledTime);
+    ]..sort(_byPrepareTime);
+
+    if (deletedTask != null) {
+      _pushNotification(
+        title: 'Task deleted',
+        message:
+            '${deletedTask.roomName} · ${deletedTask.category.label} was deleted.',
+      );
+    }
   }
 
-  int _byScheduledTime(TaskItem a, TaskItem b) {
+  int _byPrepareTime(TaskItem a, TaskItem b) {
     final byClockTime = _minutesOfDay(
-      a.scheduledTime,
-    ).compareTo(_minutesOfDay(b.scheduledTime));
+      a.prepareTime,
+    ).compareTo(_minutesOfDay(b.prepareTime));
     if (byClockTime != 0) {
       return byClockTime;
     }
-    return a.scheduledTime.compareTo(b.scheduledTime);
+    return a.prepareTime.compareTo(b.prepareTime);
   }
 
   int _minutesOfDay(DateTime value) {
     return (value.hour * 60) + value.minute;
+  }
+
+  void _pushNotification({required String title, required String message}) {
+    ref
+        .read(notificationsProvider.notifier)
+        .push(title: title, message: message);
+  }
+
+  TaskItem? _findTaskById(String taskId) {
+    for (final task in state) {
+      if (task.id == taskId) {
+        return task;
+      }
+    }
+    return null;
   }
 }
 
@@ -60,12 +110,12 @@ final tasksProvider = NotifierProvider<TasksNotifier, List<TaskItem>>(
 final sortedTasksProvider = Provider<List<TaskItem>>((ref) {
   final tasks = [...ref.watch(tasksProvider)];
   tasks.sort((a, b) {
-    final byClockTime = ((a.scheduledTime.hour * 60) + a.scheduledTime.minute)
-        .compareTo((b.scheduledTime.hour * 60) + b.scheduledTime.minute);
+    final byClockTime = ((a.prepareTime.hour * 60) + a.prepareTime.minute)
+        .compareTo((b.prepareTime.hour * 60) + b.prepareTime.minute);
     if (byClockTime != 0) {
       return byClockTime;
     }
-    return a.scheduledTime.compareTo(b.scheduledTime);
+    return a.prepareTime.compareTo(b.prepareTime);
   });
   return tasks;
 });
@@ -74,7 +124,8 @@ final _sampleTasks = <TaskItem>[
   TaskItem(
     id: 'sample_drinks_1',
     roomName: 'Room 002',
-    scheduledTime: DateTime(2026, 3, 7, 9, 30),
+    prepareTime: DateTime(2026, 3, 7, 9, 30),
+    collectTime: DateTime(2026, 3, 7, 10, 0),
     category: TaskCategory.drinks,
     personsCount: 8,
     orderedDrinks: const [
@@ -95,7 +146,8 @@ final _sampleTasks = <TaskItem>[
   TaskItem(
     id: 'sample_food_1',
     roomName: 'Room 004',
-    scheduledTime: DateTime(2026, 3, 7, 10, 15),
+    prepareTime: DateTime(2026, 3, 7, 10, 15),
+    collectTime: DateTime(2026, 3, 7, 10, 45),
     category: TaskCategory.foodSetup,
     personsCount: 12,
     orderedDrinks: const [
@@ -113,7 +165,8 @@ final _sampleTasks = <TaskItem>[
   TaskItem(
     id: 'sample_drinks_2',
     roomName: 'Room 007',
-    scheduledTime: DateTime(2026, 3, 7, 11, 0),
+    prepareTime: DateTime(2026, 3, 7, 11, 0),
+    collectTime: DateTime(2026, 3, 7, 11, 35),
     category: TaskCategory.drinks,
     personsCount: 10,
     orderedDrinks: const [
@@ -133,7 +186,8 @@ final _sampleTasks = <TaskItem>[
   TaskItem(
     id: 'sample_note_1',
     roomName: 'Room 001',
-    scheduledTime: DateTime(2026, 3, 7, 12, 0),
+    prepareTime: DateTime(2026, 3, 7, 12, 0),
+    collectTime: DateTime(2026, 3, 7, 12, 20),
     category: TaskCategory.note,
     personsCount: null,
     orderedDrinks: const [],
@@ -146,7 +200,8 @@ final _sampleTasks = <TaskItem>[
   TaskItem(
     id: 'sample_food_2',
     roomName: 'Room 009',
-    scheduledTime: DateTime(2026, 3, 7, 13, 15),
+    prepareTime: DateTime(2026, 3, 7, 13, 15),
+    collectTime: DateTime(2026, 3, 7, 13, 50),
     category: TaskCategory.foodSetup,
     personsCount: 16,
     orderedDrinks: const [
@@ -163,7 +218,8 @@ final _sampleTasks = <TaskItem>[
   TaskItem(
     id: 'sample_drinks_3',
     roomName: 'Room 010',
-    scheduledTime: DateTime(2026, 3, 7, 14, 30),
+    prepareTime: DateTime(2026, 3, 7, 14, 30),
+    collectTime: DateTime(2026, 3, 7, 15, 0),
     category: TaskCategory.drinks,
     personsCount: 20,
     orderedDrinks: const [

@@ -8,13 +8,15 @@ import '../../../models/task_status.dart';
 class DrinksReserveInput {
   const DrinksReserveInput({
     required this.roomName,
-    required this.scheduledTime,
+    required this.prepareTime,
+    required this.collectTime,
     required this.personsCount,
     required this.drinkQuantities,
   });
 
   final String roomName;
-  final DateTime scheduledTime;
+  final DateTime prepareTime;
+  final DateTime collectTime;
   final int personsCount;
   final Map<String, int> drinkQuantities;
 }
@@ -22,13 +24,15 @@ class DrinksReserveInput {
 class FoodSetupReserveInput {
   const FoodSetupReserveInput({
     required this.roomName,
-    required this.scheduledTime,
+    required this.prepareTime,
+    required this.collectTime,
     required this.personsCount,
     required this.itemQuantities,
   });
 
   final String roomName;
-  final DateTime scheduledTime;
+  final DateTime prepareTime;
+  final DateTime collectTime;
   final int personsCount;
   final Map<String, int> itemQuantities;
 }
@@ -36,13 +40,15 @@ class FoodSetupReserveInput {
 class NoteReserveInput {
   const NoteReserveInput({
     required this.roomName,
-    required this.scheduledTime,
+    required this.prepareTime,
+    required this.collectTime,
     required this.title,
     required this.note,
   });
 
   final String roomName;
-  final DateTime scheduledTime;
+  final DateTime prepareTime;
+  final DateTime collectTime;
   final String title;
   final String note;
 }
@@ -85,7 +91,8 @@ class ReserveToTaskMapper {
     return TaskItem(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       roomName: input.roomName,
-      scheduledTime: input.scheduledTime,
+      prepareTime: input.prepareTime,
+      collectTime: input.collectTime,
       category: TaskCategory.drinks,
       personsCount: input.personsCount,
       orderedDrinks: orderedDrinks,
@@ -125,7 +132,8 @@ class ReserveToTaskMapper {
     return TaskItem(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       roomName: input.roomName,
-      scheduledTime: input.scheduledTime,
+      prepareTime: input.prepareTime,
+      collectTime: input.collectTime,
       category: TaskCategory.foodSetup,
       personsCount: input.personsCount,
       orderedDrinks: setupItems,
@@ -144,7 +152,8 @@ class ReserveToTaskMapper {
     return TaskItem(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       roomName: input.roomName,
-      scheduledTime: input.scheduledTime,
+      prepareTime: input.prepareTime,
+      collectTime: input.collectTime,
       category: TaskCategory.note,
       personsCount: null,
       orderedDrinks: const [],

@@ -112,14 +112,37 @@ class _DrinksReserveForm extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               _TimeField(
-                selectedTime: formState.selectedTime,
+                labelText: 'Prepare Time',
+                selectedTime: formState.selectedPrepareTime,
                 onTap: () async {
                   final selected = await showTimePicker(
                     context: context,
-                    initialTime: formState.selectedTime ?? TimeOfDay.now(),
+                    initialTime:
+                        formState.selectedPrepareTime ?? TimeOfDay.now(),
                   );
                   if (selected != null) {
-                    ref.read(reserveFormProvider.notifier).setTime(selected);
+                    ref
+                        .read(reserveFormProvider.notifier)
+                        .setPrepareTime(selected);
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              _TimeField(
+                labelText: 'Collect Time',
+                selectedTime: formState.selectedCollectTime,
+                onTap: () async {
+                  final selected = await showTimePicker(
+                    context: context,
+                    initialTime:
+                        formState.selectedCollectTime ??
+                        formState.selectedPrepareTime ??
+                        TimeOfDay.now(),
+                  );
+                  if (selected != null) {
+                    ref
+                        .read(reserveFormProvider.notifier)
+                        .setCollectTime(selected);
                   }
                 },
               ),
@@ -197,8 +220,12 @@ class _DrinksReserveForm extends ConsumerWidget {
       _showError(context, 'Please select a room.');
       return;
     }
-    if (formState.selectedTime == null) {
-      _showError(context, 'Please select a time.');
+    if (formState.selectedPrepareTime == null) {
+      _showError(context, 'Please select prepare time.');
+      return;
+    }
+    if (formState.selectedCollectTime == null) {
+      _showError(context, 'Please select collect time.');
       return;
     }
     final personsCount = formState.parsedPersonsCount;
@@ -214,12 +241,23 @@ class _DrinksReserveForm extends ConsumerWidget {
     final selectedRoom = rooms.firstWhere(
       (room) => room.id == formState.selectedRoomId,
     );
-    final scheduledTime = _composeScheduledDateTime(formState.selectedTime!);
+    final prepareTime = _composeReservationDateTime(
+      formState.selectedPrepareTime!,
+    );
+    final collectTime = _composeReservationDateTime(
+      formState.selectedCollectTime!,
+      baseDate: prepareTime,
+    );
+    if (!collectTime.isAfter(prepareTime)) {
+      _showError(context, 'Collect time must be after prepare time.');
+      return;
+    }
 
     final task = ReserveToTaskMapper.mapDrinks(
       DrinksReserveInput(
         roomName: selectedRoom.name,
-        scheduledTime: scheduledTime,
+        prepareTime: prepareTime,
+        collectTime: collectTime,
         personsCount: personsCount,
         drinkQuantities: formState.drinkQuantities,
       ),
@@ -273,14 +311,37 @@ class _FoodSetupReserveForm extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               _TimeField(
-                selectedTime: formState.selectedTime,
+                labelText: 'Prepare Time',
+                selectedTime: formState.selectedPrepareTime,
                 onTap: () async {
                   final selected = await showTimePicker(
                     context: context,
-                    initialTime: formState.selectedTime ?? TimeOfDay.now(),
+                    initialTime:
+                        formState.selectedPrepareTime ?? TimeOfDay.now(),
                   );
                   if (selected != null) {
-                    ref.read(foodSetupFormProvider.notifier).setTime(selected);
+                    ref
+                        .read(foodSetupFormProvider.notifier)
+                        .setPrepareTime(selected);
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              _TimeField(
+                labelText: 'Collect Time',
+                selectedTime: formState.selectedCollectTime,
+                onTap: () async {
+                  final selected = await showTimePicker(
+                    context: context,
+                    initialTime:
+                        formState.selectedCollectTime ??
+                        formState.selectedPrepareTime ??
+                        TimeOfDay.now(),
+                  );
+                  if (selected != null) {
+                    ref
+                        .read(foodSetupFormProvider.notifier)
+                        .setCollectTime(selected);
                   }
                 },
               ),
@@ -360,8 +421,12 @@ class _FoodSetupReserveForm extends ConsumerWidget {
       _showError(context, 'Please select a room.');
       return;
     }
-    if (formState.selectedTime == null) {
-      _showError(context, 'Please select a time.');
+    if (formState.selectedPrepareTime == null) {
+      _showError(context, 'Please select prepare time.');
+      return;
+    }
+    if (formState.selectedCollectTime == null) {
+      _showError(context, 'Please select collect time.');
       return;
     }
     final personsCount = formState.parsedPersonsCount;
@@ -377,12 +442,23 @@ class _FoodSetupReserveForm extends ConsumerWidget {
     final selectedRoom = rooms.firstWhere(
       (room) => room.id == formState.selectedRoomId,
     );
-    final scheduledTime = _composeScheduledDateTime(formState.selectedTime!);
+    final prepareTime = _composeReservationDateTime(
+      formState.selectedPrepareTime!,
+    );
+    final collectTime = _composeReservationDateTime(
+      formState.selectedCollectTime!,
+      baseDate: prepareTime,
+    );
+    if (!collectTime.isAfter(prepareTime)) {
+      _showError(context, 'Collect time must be after prepare time.');
+      return;
+    }
 
     final task = ReserveToTaskMapper.mapFoodSetup(
       FoodSetupReserveInput(
         roomName: selectedRoom.name,
-        scheduledTime: scheduledTime,
+        prepareTime: prepareTime,
+        collectTime: collectTime,
         personsCount: personsCount,
         itemQuantities: formState.itemQuantities,
       ),
@@ -436,14 +512,37 @@ class _NoteReserveForm extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               _TimeField(
-                selectedTime: formState.selectedTime,
+                labelText: 'Prepare Time',
+                selectedTime: formState.selectedPrepareTime,
                 onTap: () async {
                   final selected = await showTimePicker(
                     context: context,
-                    initialTime: formState.selectedTime ?? TimeOfDay.now(),
+                    initialTime:
+                        formState.selectedPrepareTime ?? TimeOfDay.now(),
                   );
                   if (selected != null) {
-                    ref.read(noteFormProvider.notifier).setTime(selected);
+                    ref
+                        .read(noteFormProvider.notifier)
+                        .setPrepareTime(selected);
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              _TimeField(
+                labelText: 'Collect Time',
+                selectedTime: formState.selectedCollectTime,
+                onTap: () async {
+                  final selected = await showTimePicker(
+                    context: context,
+                    initialTime:
+                        formState.selectedCollectTime ??
+                        formState.selectedPrepareTime ??
+                        TimeOfDay.now(),
+                  );
+                  if (selected != null) {
+                    ref
+                        .read(noteFormProvider.notifier)
+                        .setCollectTime(selected);
                   }
                 },
               ),
@@ -489,8 +588,12 @@ class _NoteReserveForm extends ConsumerWidget {
       _showError(context, 'Please select a room.');
       return;
     }
-    if (formState.selectedTime == null) {
-      _showError(context, 'Please select a time.');
+    if (formState.selectedPrepareTime == null) {
+      _showError(context, 'Please select prepare time.');
+      return;
+    }
+    if (formState.selectedCollectTime == null) {
+      _showError(context, 'Please select collect time.');
       return;
     }
     if (formState.noteInput.trim().isEmpty) {
@@ -501,12 +604,23 @@ class _NoteReserveForm extends ConsumerWidget {
     final selectedRoom = rooms.firstWhere(
       (room) => room.id == formState.selectedRoomId,
     );
-    final scheduledTime = _composeScheduledDateTime(formState.selectedTime!);
+    final prepareTime = _composeReservationDateTime(
+      formState.selectedPrepareTime!,
+    );
+    final collectTime = _composeReservationDateTime(
+      formState.selectedCollectTime!,
+      baseDate: prepareTime,
+    );
+    if (!collectTime.isAfter(prepareTime)) {
+      _showError(context, 'Collect time must be after prepare time.');
+      return;
+    }
 
     final task = ReserveToTaskMapper.mapNote(
       NoteReserveInput(
         roomName: selectedRoom.name,
-        scheduledTime: scheduledTime,
+        prepareTime: prepareTime,
+        collectTime: collectTime,
         title: formState.titleInput,
         note: formState.noteInput,
       ),
@@ -523,8 +637,13 @@ class _NoteReserveForm extends ConsumerWidget {
 }
 
 class _TimeField extends StatelessWidget {
-  const _TimeField({required this.selectedTime, required this.onTap});
+  const _TimeField({
+    required this.labelText,
+    required this.selectedTime,
+    required this.onTap,
+  });
 
+  final String labelText;
   final TimeOfDay? selectedTime;
   final VoidCallback onTap;
 
@@ -538,8 +657,8 @@ class _TimeField extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Time',
+        decoration: InputDecoration(
+          labelText: labelText,
           suffixIcon: Icon(Icons.schedule_outlined),
         ),
         child: Text(label),
@@ -548,17 +667,21 @@ class _TimeField extends StatelessWidget {
   }
 }
 
-DateTime _composeScheduledDateTime(TimeOfDay selectedTime) {
+DateTime _composeReservationDateTime(
+  TimeOfDay selectedTime, {
+  DateTime? baseDate,
+}) {
+  final dateBase = baseDate ?? DateTime.now();
   final now = DateTime.now();
   var scheduled = DateTime(
-    now.year,
-    now.month,
-    now.day,
+    dateBase.year,
+    dateBase.month,
+    dateBase.day,
     selectedTime.hour,
     selectedTime.minute,
   );
 
-  if (scheduled.isBefore(now)) {
+  if (baseDate == null && scheduled.isBefore(now)) {
     scheduled = scheduled.add(const Duration(days: 1));
   }
   return scheduled;

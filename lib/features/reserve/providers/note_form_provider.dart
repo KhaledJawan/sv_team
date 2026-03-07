@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class NoteFormState {
   const NoteFormState({
     required this.selectedRoomId,
-    required this.selectedTime,
+    required this.selectedPrepareTime,
+    required this.selectedCollectTime,
     required this.titleInput,
     required this.noteInput,
   });
@@ -12,27 +13,36 @@ class NoteFormState {
   factory NoteFormState.initial() {
     return const NoteFormState(
       selectedRoomId: null,
-      selectedTime: null,
+      selectedPrepareTime: null,
+      selectedCollectTime: null,
       titleInput: '',
       noteInput: '',
     );
   }
 
   final String? selectedRoomId;
-  final TimeOfDay? selectedTime;
+  final TimeOfDay? selectedPrepareTime;
+  final TimeOfDay? selectedCollectTime;
   final String titleInput;
   final String noteInput;
 
   NoteFormState copyWith({
     String? selectedRoomId,
-    TimeOfDay? selectedTime,
-    bool clearTime = false,
+    TimeOfDay? selectedPrepareTime,
+    bool clearPrepareTime = false,
+    TimeOfDay? selectedCollectTime,
+    bool clearCollectTime = false,
     String? titleInput,
     String? noteInput,
   }) {
     return NoteFormState(
       selectedRoomId: selectedRoomId ?? this.selectedRoomId,
-      selectedTime: clearTime ? null : selectedTime ?? this.selectedTime,
+      selectedPrepareTime: clearPrepareTime
+          ? null
+          : selectedPrepareTime ?? this.selectedPrepareTime,
+      selectedCollectTime: clearCollectTime
+          ? null
+          : selectedCollectTime ?? this.selectedCollectTime,
       titleInput: titleInput ?? this.titleInput,
       noteInput: noteInput ?? this.noteInput,
     );
@@ -47,8 +57,12 @@ class NoteFormNotifier extends Notifier<NoteFormState> {
     state = state.copyWith(selectedRoomId: roomId);
   }
 
-  void setTime(TimeOfDay time) {
-    state = state.copyWith(selectedTime: time);
+  void setPrepareTime(TimeOfDay time) {
+    state = state.copyWith(selectedPrepareTime: time);
+  }
+
+  void setCollectTime(TimeOfDay time) {
+    state = state.copyWith(selectedCollectTime: time);
   }
 
   void setTitle(String title) {
