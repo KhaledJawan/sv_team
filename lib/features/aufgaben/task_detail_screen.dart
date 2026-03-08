@@ -103,10 +103,20 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       return;
                     }
                     if (shouldDelete == true) {
-                      ref
+                      final deleted = ref
                           .read(tasksProvider.notifier)
                           .deleteTask(currentTask.id);
-                      Navigator.of(context).maybePop();
+                      if (deleted) {
+                        Navigator.of(context).maybePop();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Daily snack-machine tasks cannot be deleted.',
+                            ),
+                          ),
+                        );
+                      }
                     }
                   },
                   itemBuilder: (context) => const [
@@ -127,6 +137,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   Widget _buildReadOnlyBody(TaskItem currentTask) {
+    final hasCollectTime = currentTask.category != TaskCategory.snacky;
+    final collectIsBold = currentTask.status == TaskStatus.prepared;
     final itemSectionTitle = switch (currentTask.category) {
       TaskCategory.drinks => 'Ordered Drinks',
       TaskCategory.foodSetup => 'Setup Items',
@@ -182,8 +194,26 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       color: Color(0xFF6E6E73),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Prep ${currentTask.prepareTime.hhMm} · Collect ${currentTask.collectTime.hhMm}',
+                    RichText(
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        children: [
+                          TextSpan(
+                            text: 'Prep ${currentTask.prepareTime.hhMm}',
+                          ),
+                          if (hasCollectTime) ...[
+                            const TextSpan(text: ' · '),
+                            TextSpan(
+                              text: 'Collect ${currentTask.collectTime.hhMm}',
+                              style: TextStyle(
+                                fontWeight: collectIsBold
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -204,10 +234,16 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   label: 'Prepare Time',
                   value: currentTask.prepareTime.hhMm,
                 ),
-                _InfoRow(
-                  label: 'Collect Time',
-                  value: currentTask.collectTime.hhMm,
-                ),
+                if (hasCollectTime)
+                  _InfoRow(
+                    label: 'Collect Time',
+                    value: currentTask.collectTime.hhMm,
+                    valueStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: collectIsBold
+                          ? FontWeight.w700
+                          : FontWeight.w400,
+                    ),
+                  ),
                 _InfoRow(label: 'Category', value: currentTask.category.label),
                 if (currentTask.personsCount != null)
                   _InfoRow(
@@ -314,12 +350,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   value: _prepareTimeDraft.hhMm,
                   onTap: _pickPrepareTime,
                 ),
-                const SizedBox(height: 10),
-                _EditableTimeField(
-                  labelText: 'Collect Time',
-                  value: _collectTimeDraft.hhMm,
-                  onTap: _pickCollectTime,
-                ),
+                if (_categoryDraft != TaskCategory.snacky) ...[
+                  const SizedBox(height: 10),
+                  _EditableTimeField(
+                    labelText: 'Collect Time',
+                    value: _collectTimeDraft.hhMm,
+                    onTap: _pickCollectTime,
+                  ),
+                ],
                 const SizedBox(height: 10),
                 DropdownButtonFormField<TaskCategory>(
                   key: ValueKey('edit_category_${_categoryDraft.name}'),
@@ -514,7 +552,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       _showError('Room is required.');
       return;
     }
-    if (!_collectTimeDraft.isAfter(_prepareTimeDraft)) {
+    if (_categoryDraft != TaskCategory.snacky &&
+        !_collectTimeDraft.isAfter(_prepareTimeDraft)) {
       _showError('Collect time must be after prepare time.');
       return;
     }
@@ -554,10 +593,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       );
     }
 
+    final collectTime = _categoryDraft == TaskCategory.snacky
+        ? _prepareTimeDraft
+        : _collectTimeDraft;
+
     final updatedTask = currentTask.copyWith(
       roomName: roomName,
       prepareTime: _prepareTimeDraft,
-      collectTime: _collectTimeDraft,
+      collectTime: collectTime,
       category: _categoryDraft,
       personsCount: personsCount,
       orderedDrinks: orderedItems,
@@ -835,10 +878,11 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
+  const _InfoRow({required this.label, required this.value, this.valueStyle});
 
   final String label;
   final String value;
+  final TextStyle? valueStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -849,7 +893,10 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
           ),
-          Text(value, style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            value,
+            style: valueStyle ?? Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );

@@ -92,11 +92,17 @@ class AufgabenScreen extends ConsumerWidget {
 
     final shouldDelete = await _showDeleteDialog(context);
     if (shouldDelete == true) {
-      ref.read(tasksProvider.notifier).deleteTask(task.id);
+      final deleted = ref.read(tasksProvider.notifier).deleteTask(task.id);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Task deleted.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              deleted
+                  ? 'Task deleted.'
+                  : 'Daily snack-machine tasks cannot be deleted.',
+            ),
+          ),
+        );
       }
     }
   }

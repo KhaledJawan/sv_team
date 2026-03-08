@@ -23,6 +23,11 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasCollectTime = task.category != TaskCategory.snacky;
+    final collectIsBold = task.status == TaskStatus.prepared;
+    final showCollectAsPrimary = hasCollectTime && collectIsBold;
+    final baseCollectStyle =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
     final peopleSummary = task.personsCount != null
         ? '${task.personsCount} persons'
         : 'No persons count';
@@ -62,15 +67,25 @@ class TaskCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              'Prep ${task.prepareTime.hhMm}',
+                              showCollectAsPrimary
+                                  ? 'Collect ${task.collectTime.hhMm}'
+                                  : 'Prep ${task.prepareTime.hhMm}',
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Collect ${task.collectTime.hhMm}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
+                            if (hasCollectTime) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                showCollectAsPrimary
+                                    ? 'Prep ${task.prepareTime.hhMm}'
+                                    : 'Collect ${task.collectTime.hhMm}',
+                                style: baseCollectStyle.copyWith(
+                                  fontWeight: collectIsBold
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
