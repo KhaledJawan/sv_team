@@ -211,10 +211,19 @@ final sortedTasksProvider = Provider<List<TaskItem>>((ref) {
 int compareTasksByOperationalTime(TaskItem a, TaskItem b) {
   final timeA = _timeUsedForSorting(a);
   final timeB = _timeUsedForSorting(b);
-  final byClockTime = _minutesOfDay(timeA).compareTo(_minutesOfDay(timeB));
-  if (byClockTime != 0) {
-    return byClockTime;
+
+  final now = DateTime.now();
+  final aIsToday = _isSameCalendarDay(timeA, now);
+  final bIsToday = _isSameCalendarDay(timeB, now);
+  if (aIsToday != bIsToday) {
+    return aIsToday ? -1 : 1;
   }
+
+  final byDate = _dateOnly(timeA).compareTo(_dateOnly(timeB));
+  if (byDate != 0) {
+    return byDate;
+  }
+
   return timeA.compareTo(timeB);
 }
 
@@ -224,8 +233,12 @@ DateTime _timeUsedForSorting(TaskItem task) {
       : task.prepareTime;
 }
 
-int _minutesOfDay(DateTime value) {
-  return (value.hour * 60) + value.minute;
+bool _isSameCalendarDay(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+DateTime _dateOnly(DateTime value) {
+  return DateTime(value.year, value.month, value.day);
 }
 
 const _dailySnackTaskIds = <String>{
@@ -299,7 +312,6 @@ final _sampleTasks = <TaskItem>[
     ],
     derivedItems: const [
       DerivedItem(id: 'cups', name: 'Cups', quantity: 8),
-      DerivedItem(id: 'saucers', name: 'Saucers', quantity: 8),
       DerivedItem(id: 'napkins', name: 'Napkins', quantity: 8),
       DerivedItem(id: 'glasses', name: 'Glasses', quantity: 8),
     ],

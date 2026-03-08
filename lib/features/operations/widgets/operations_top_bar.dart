@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/app_localizations_x.dart';
 import '../../../shared/widgets/app_segmented_control.dart';
 import '../providers/operations_segment_provider.dart';
 
@@ -19,6 +20,8 @@ class OperationsTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Row(
@@ -27,13 +30,19 @@ class OperationsTopBar extends StatelessWidget {
           Expanded(
             child: AppSegmentedControl<OperationsSegment>(
               value: selectedSegment,
-              options: const [
+              options: [
                 SegmentOption(
                   value: OperationsSegment.reserve,
-                  label: 'Reserve',
+                  label: l10n.manageReserve,
                 ),
-                SegmentOption(value: OperationsSegment.snacky, label: 'Snacky'),
-                SegmentOption(value: OperationsSegment.others, label: 'Others'),
+                SegmentOption(
+                  value: OperationsSegment.snacky,
+                  label: l10n.manageSnacky,
+                ),
+                SegmentOption(
+                  value: OperationsSegment.others,
+                  label: l10n.manageOthers,
+                ),
               ],
               onChanged: onSegmentChanged,
             ),
@@ -41,7 +50,7 @@ class OperationsTopBar extends StatelessWidget {
           const SizedBox(width: 8),
           IconButton(
             onPressed: onNotificationTap,
-            tooltip: 'Notifications',
+            tooltip: l10n.manageNotificationsTooltip,
             icon: Stack(
               clipBehavior: Clip.none,
               children: [

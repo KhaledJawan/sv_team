@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/app_localizations_x.dart';
 import '../../../models/task_status.dart';
 
 class TaskStatusSelector extends StatelessWidget {
@@ -43,6 +44,8 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -72,7 +75,7 @@ class _StatusPill extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                status.label,
+                status.localizedLabel(l10n),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: selected ? Colors.black : const Color(0xFF5F5F66),
                   fontWeight: FontWeight.w600,

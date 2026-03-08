@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/app_localizations_x.dart';
 import '../providers/bottom_nav_provider.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
@@ -14,6 +15,7 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return SizedBox(
@@ -43,16 +45,14 @@ class CustomBottomNavBar extends StatelessWidget {
                 children: [
                   _NavTabItem(
                     icon: Icons.dashboard_outlined,
-                    label: 'Manage',
+                    label: l10n.navManage,
                     selected: selectedTab == ShellTab.manage,
                     onTap: () => onSelect(ShellTab.manage),
                   ),
-                  const Spacer(),
                   const SizedBox(width: 102),
-                  const Spacer(),
                   _NavTabItem(
                     icon: Icons.person_outline,
-                    label: 'Profile',
+                    label: l10n.navProfile,
                     selected: selectedTab == ShellTab.profile,
                     onTap: () => onSelect(ShellTab.profile),
                   ),
@@ -72,7 +72,7 @@ class CustomBottomNavBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Aufgaben',
+                  l10n.navTasks,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: selectedTab == ShellTab.aufgaben
                         ? Colors.black

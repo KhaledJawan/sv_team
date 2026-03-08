@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/router.dart';
+import '../../core/localization/app_localizations_x.dart';
 import '../../models/task_item.dart';
 import '../../models/task_status.dart';
 import '../../shared/widgets/empty_state.dart';
@@ -15,13 +16,14 @@ class AufgabenScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final tasks = ref.watch(sortedTasksProvider);
 
     final body = tasks.isEmpty
-        ? const EmptyState(
+        ? EmptyState(
             icon: Icons.fact_check_outlined,
-            title: 'No tasks yet',
-            subtitle: 'Create a reservation to generate your first task.',
+            title: l10n.aufgabenEmptyTitle,
+            subtitle: l10n.aufgabenEmptySubtitle,
           )
         : ListView.separated(
             itemCount: tasks.length,
@@ -53,7 +55,7 @@ class AufgabenScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Aufgaben')),
+      appBar: AppBar(title: Text(l10n.aufgabenTitle)),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: body,
@@ -71,6 +73,8 @@ class AufgabenScreen extends ConsumerWidget {
     required TaskItem task,
     required TaskCardMenuAction action,
   }) async {
+    final l10n = context.l10n;
+
     if (action == TaskCardMenuAction.openEdit) {
       _openTask(context, task);
       return;
@@ -98,8 +102,8 @@ class AufgabenScreen extends ConsumerWidget {
           SnackBar(
             content: Text(
               deleted
-                  ? 'Task deleted.'
-                  : 'Daily snack-machine tasks cannot be deleted.',
+                  ? l10n.aufgabenTaskDeleted
+                  : l10n.aufgabenDailySnackNoDelete,
             ),
           ),
         );
@@ -111,6 +115,7 @@ class AufgabenScreen extends ConsumerWidget {
     required BuildContext context,
     required TaskStatus initialStatus,
   }) async {
+    final l10n = context.l10n;
     var selectedStatus = initialStatus;
 
     return showDialog<TaskStatus>(
@@ -119,7 +124,7 @@ class AufgabenScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Change status'),
+              title: Text(l10n.aufgabenChangeStatusTitle),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -139,7 +144,7 @@ class AufgabenScreen extends ConsumerWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      title: Text(status.label),
+                      title: Text(status.localizedLabel(l10n)),
                       trailing: selectedStatus == status
                           ? const Icon(Icons.check, size: 18)
                           : null,
@@ -149,12 +154,12 @@ class AufgabenScreen extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.commonCancel),
                 ),
                 FilledButton(
                   onPressed: () =>
                       Navigator.of(dialogContext).pop(selectedStatus),
-                  child: const Text('Save'),
+                  child: Text(l10n.commonSave),
                 ),
               ],
             );
@@ -165,20 +170,21 @@ class AufgabenScreen extends ConsumerWidget {
   }
 
   Future<bool?> _showDeleteDialog(BuildContext context) {
+    final l10n = context.l10n;
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete task?'),
-          content: const Text('This action cannot be undone.'),
+          title: Text(l10n.aufgabenDeleteTaskTitle),
+          content: Text(l10n.aufgabenDeleteTaskBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
+              child: Text(l10n.commonDelete),
             ),
           ],
         );

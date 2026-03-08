@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_localizations_x.dart';
 import '../../shared/widgets/empty_state.dart';
 
 class OthersScreen extends StatelessWidget {
@@ -9,10 +10,11 @@ class OthersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = const EmptyState(
+    final l10n = context.l10n;
+    final content = EmptyState(
       icon: Icons.more_horiz,
-      title: 'Others',
-      subtitle: 'Others will be added in the next phase.',
+      title: l10n.othersTitle,
+      subtitle: l10n.othersSubtitle,
     );
 
     if (embedded) {
@@ -23,7 +25,7 @@ class OthersScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Others')),
+      appBar: AppBar(title: Text(l10n.othersTitle)),
       body: Padding(padding: const EdgeInsets.all(16), child: content),
     );
   }

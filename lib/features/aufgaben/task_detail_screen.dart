@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/extensions/date_time_extension.dart';
+import '../../core/localization/app_localizations_x.dart';
+import '../../core/localization/localized_catalog_names.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/derived_item.dart';
 import '../../models/drink_order_item.dart';
 import '../../models/task_category.dart';
@@ -10,7 +13,6 @@ import '../../models/task_item.dart';
 import '../../models/task_status.dart';
 import '../../shared/widgets/app_card.dart';
 import '../../shared/widgets/quantity_stepper.dart';
-import '../../shared/widgets/status_indicator.dart';
 import 'providers/tasks_provider.dart';
 import 'widgets/task_status_selector.dart';
 
@@ -58,13 +60,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final tasks = ref.watch(tasksProvider);
     final index = tasks.indexWhere((item) => item.id == widget.task.id);
 
     if (index == -1) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Task')),
-        body: const Center(child: Text('Task not found.')),
+        appBar: AppBar(title: Text(l10n.taskDetailTitle)),
+        body: Center(child: Text(l10n.taskNotFound)),
       );
     }
 
@@ -79,19 +82,19 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         actions: _isEditing
             ? [
                 IconButton(
-                  tooltip: 'Cancel',
+                  tooltip: l10n.commonCancel,
                   onPressed: _cancelEditing,
                   icon: const Icon(Icons.close),
                 ),
                 IconButton(
-                  tooltip: 'Save',
+                  tooltip: l10n.commonSave,
                   onPressed: () => _saveEdits(currentTask),
                   icon: const Icon(Icons.check),
                 ),
               ]
             : [
                 PopupMenuButton<_TaskDetailAction>(
-                  tooltip: 'Task actions',
+                  tooltip: l10n.taskActionsTooltip,
                   onSelected: (action) async {
                     if (action == _TaskDetailAction.edit) {
                       _startEditing(currentTask);
@@ -110,23 +113,21 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         Navigator.of(context).maybePop();
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Daily snack-machine tasks cannot be deleted.',
-                            ),
+                          SnackBar(
+                            content: Text(l10n.aufgabenDailySnackNoDelete),
                           ),
                         );
                       }
                     }
                   },
-                  itemBuilder: (context) => const [
+                  itemBuilder: (context) => [
                     PopupMenuItem(
                       value: _TaskDetailAction.edit,
-                      child: Text('Edit'),
+                      child: Text(l10n.commonEdit),
                     ),
                     PopupMenuItem(
                       value: _TaskDetailAction.delete,
-                      child: Text('Delete'),
+                      child: Text(l10n.commonDelete),
                     ),
                   ],
                 ),
@@ -137,14 +138,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   Widget _buildReadOnlyBody(TaskItem currentTask) {
+    final l10n = context.l10n;
     final hasCollectTime = currentTask.category != TaskCategory.snacky;
     final collectIsBold = currentTask.status == TaskStatus.prepared;
     final itemSectionTitle = switch (currentTask.category) {
-      TaskCategory.drinks => 'Ordered Drinks',
-      TaskCategory.foodSetup => 'Setup Items',
-      TaskCategory.note => 'Items',
-      TaskCategory.snacky => 'Items',
-      TaskCategory.others => 'Items',
+      TaskCategory.drinks => l10n.taskItemsOrderedDrinks,
+      TaskCategory.foodSetup => l10n.taskItemsSetup,
+      TaskCategory.note => l10n.taskItemsGeneric,
+      TaskCategory.snacky => l10n.taskItemsGeneric,
+      TaskCategory.others => l10n.taskItemsGeneric,
     };
 
     return SingleChildScrollView(
@@ -156,7 +158,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SectionTitle('Status'),
+                _SectionTitle(l10n.taskStatusSection),
                 const SizedBox(height: 8),
                 TaskStatusSelector(
                   currentStatus: currentTask.status,
@@ -173,52 +175,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _SectionTitle(l10n.taskSummarySection),
+                const SizedBox(height: 8),
                 Text(
-                  currentTask.shortDescription,
+                  _localizedSummaryText(l10n: l10n, task: currentTask),
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Icon(
-                      currentTask.category.icon,
-                      size: 18,
-                      color: const Color(0xFF6E6E73),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(currentTask.category.label),
-                    const SizedBox(width: 16),
-                    const Icon(
-                      Icons.schedule,
-                      size: 18,
-                      color: Color(0xFF6E6E73),
-                    ),
-                    const SizedBox(width: 8),
-                    RichText(
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        children: [
-                          TextSpan(
-                            text: 'Prep ${currentTask.prepareTime.hhMm}',
-                          ),
-                          if (hasCollectTime) ...[
-                            const TextSpan(text: ' · '),
-                            TextSpan(
-                              text: 'Collect ${currentTask.collectTime.hhMm}',
-                              style: TextStyle(
-                                fontWeight: collectIsBold
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                StatusIndicator(status: currentTask.status),
               ],
             ),
           ),
@@ -227,27 +189,37 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SectionTitle('Task Info'),
+                _SectionTitle(l10n.taskInfoSection),
                 const SizedBox(height: 8),
-                _InfoRow(label: 'Room', value: currentTask.roomName),
                 _InfoRow(
-                  label: 'Prepare Time',
-                  value: currentTask.prepareTime.hhMm,
+                  label: l10n.taskRoomLabel,
+                  value: currentTask.roomName,
+                ),
+                _InfoRow(
+                  label: l10n.taskPrepareTimeLabel,
+                  value: currentTask.prepareTime.ddMmYyyyOrTodayHhMmLabel(
+                    l10n.commonToday,
+                  ),
                 ),
                 if (hasCollectTime)
                   _InfoRow(
-                    label: 'Collect Time',
-                    value: currentTask.collectTime.hhMm,
+                    label: l10n.taskCollectTimeLabel,
+                    value: currentTask.collectTime.ddMmYyyyOrTodayHhMmLabel(
+                      l10n.commonToday,
+                    ),
                     valueStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: collectIsBold
                           ? FontWeight.w700
                           : FontWeight.w400,
                     ),
                   ),
-                _InfoRow(label: 'Category', value: currentTask.category.label),
+                _InfoRow(
+                  label: l10n.commonCategory,
+                  value: currentTask.category.localizedLabel(l10n),
+                ),
                 if (currentTask.personsCount != null)
                   _InfoRow(
-                    label: 'Persons',
+                    label: l10n.taskPersonsLabel,
                     value: '${currentTask.personsCount}',
                   ),
               ],
@@ -261,11 +233,17 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 _SectionTitle(itemSectionTitle),
                 const SizedBox(height: 8),
                 if (currentTask.orderedDrinks.isEmpty)
-                  const Text('No items listed.')
+                  Text(l10n.taskNoItems)
                 else
                   ...currentTask.orderedDrinks.map(
-                    (item) =>
-                        _InfoRow(label: item.name, value: '${item.quantity}'),
+                    (item) => _InfoRow(
+                      label: _localizedItemName(
+                        l10n: l10n,
+                        category: currentTask.category,
+                        item: item,
+                      ),
+                      value: '${item.quantity}',
+                    ),
                   ),
               ],
             ),
@@ -277,14 +255,20 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _SectionTitle('Auto-Generated Support Items'),
+                  _SectionTitle(l10n.taskAutoGeneratedSupportTitle),
                   const SizedBox(height: 8),
                   if (currentTask.derivedItems.isEmpty)
-                    const Text('No support items generated.')
+                    Text(l10n.taskNoSupportItems)
                   else
                     ...currentTask.derivedItems.map(
-                      (item) =>
-                          _InfoRow(label: item.name, value: '${item.quantity}'),
+                      (item) => _InfoRow(
+                        label: localizedDerivedItemName(
+                          l10n,
+                          item.id,
+                          fallback: item.name,
+                        ),
+                        value: '${item.quantity}',
+                      ),
                     ),
                 ],
               ),
@@ -295,12 +279,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SectionTitle('Note'),
+                _SectionTitle(l10n.taskNoteSection),
                 const SizedBox(height: 8),
                 Text(
                   currentTask.note?.trim().isNotEmpty == true
                       ? currentTask.note!
-                      : 'No note added.',
+                      : l10n.taskNoNote,
                 ),
               ],
             ),
@@ -311,6 +295,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   Widget _buildEditBody() {
+    final l10n = context.l10n;
     final itemDefinitions = _itemDefinitionsForCategory(_categoryDraft);
 
     return SingleChildScrollView(
@@ -322,12 +307,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SectionTitle('Edit Task'),
+                _SectionTitle(l10n.taskEditSection),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   key: ValueKey('edit_room_$_roomNameDraft'),
                   initialValue: _roomNameDraft,
-                  decoration: const InputDecoration(labelText: 'Room'),
+                  decoration: InputDecoration(labelText: l10n.commonRoom),
                   items: AppConstants.roomNames
                       .map(
                         (roomName) => DropdownMenuItem<String>(
@@ -345,15 +330,31 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   },
                 ),
                 const SizedBox(height: 10),
+                _EditableDateField(
+                  labelText: l10n.taskPrepareDateLabel,
+                  value: _prepareTimeDraft.ddMmYyyyOrTodayLabel(
+                    l10n.commonToday,
+                  ),
+                  onTap: _pickPrepareDate,
+                ),
+                const SizedBox(height: 10),
                 _EditableTimeField(
-                  labelText: 'Prepare Time',
+                  labelText: l10n.taskPrepareTimeLabel,
                   value: _prepareTimeDraft.hhMm,
                   onTap: _pickPrepareTime,
                 ),
                 if (_categoryDraft != TaskCategory.snacky) ...[
                   const SizedBox(height: 10),
+                  _EditableDateField(
+                    labelText: l10n.taskCollectDateLabel,
+                    value: _collectTimeDraft.ddMmYyyyOrTodayLabel(
+                      l10n.commonToday,
+                    ),
+                    onTap: _pickCollectDate,
+                  ),
+                  const SizedBox(height: 10),
                   _EditableTimeField(
-                    labelText: 'Collect Time',
+                    labelText: l10n.taskCollectTimeLabel,
                     value: _collectTimeDraft.hhMm,
                     onTap: _pickCollectTime,
                   ),
@@ -362,12 +363,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 DropdownButtonFormField<TaskCategory>(
                   key: ValueKey('edit_category_${_categoryDraft.name}'),
                   initialValue: _categoryDraft,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  decoration: InputDecoration(labelText: l10n.commonCategory),
                   items: TaskCategory.values
                       .map(
                         (category) => DropdownMenuItem<TaskCategory>(
                           value: category,
-                          child: Text(category.label),
+                          child: Text(category.localizedLabel(l10n)),
                         ),
                       )
                       .toList(),
@@ -390,16 +391,16 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   TextFormField(
                     controller: _personsController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Number of People',
+                    decoration: InputDecoration(
+                      labelText: l10n.taskNumberOfPeopleLabel,
                     ),
                   ),
                 ],
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _shortDescriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Short Description',
+                  decoration: InputDecoration(
+                    labelText: l10n.taskShortDescriptionLabel,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -407,8 +408,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   controller: _noteController,
                   minLines: 3,
                   maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: 'Note',
+                  decoration: InputDecoration(
+                    labelText: l10n.commonNote,
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -420,7 +421,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SectionTitle('Status'),
+                _SectionTitle(l10n.taskStatusSection),
                 const SizedBox(height: 8),
                 TaskStatusSelector(
                   currentStatus: _statusDraft,
@@ -441,8 +442,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 children: [
                   _SectionTitle(
                     _categoryDraft == TaskCategory.drinks
-                        ? 'Drinks Items'
-                        : 'Food Setup Items',
+                        ? l10n.taskDrinksItemsLabel
+                        : l10n.taskFoodSetupItemsLabel,
                   ),
                   const SizedBox(height: 8),
                   ...itemDefinitions.map((item) {
@@ -510,6 +511,53 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     });
   }
 
+  Future<void> _pickPrepareDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _prepareTimeDraft,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+    );
+    if (selected == null) {
+      return;
+    }
+
+    setState(() {
+      _prepareTimeDraft = DateTime(
+        selected.year,
+        selected.month,
+        selected.day,
+        _prepareTimeDraft.hour,
+        _prepareTimeDraft.minute,
+      );
+      if (_categoryDraft == TaskCategory.snacky) {
+        _collectTimeDraft = _prepareTimeDraft;
+      }
+    });
+  }
+
+  Future<void> _pickCollectDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _collectTimeDraft,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+    );
+    if (selected == null) {
+      return;
+    }
+
+    setState(() {
+      _collectTimeDraft = DateTime(
+        selected.year,
+        selected.month,
+        selected.day,
+        _collectTimeDraft.hour,
+        _collectTimeDraft.minute,
+      );
+    });
+  }
+
   Future<void> _pickCollectTime() async {
     final selected = await showTimePicker(
       context: context,
@@ -547,14 +595,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   void _saveEdits(TaskItem currentTask) {
+    final l10n = context.l10n;
     final roomName = _roomNameDraft.trim();
     if (roomName.isEmpty) {
-      _showError('Room is required.');
+      _showError(l10n.taskErrorRoomRequired);
       return;
     }
     if (_categoryDraft != TaskCategory.snacky &&
         !_collectTimeDraft.isAfter(_prepareTimeDraft)) {
-      _showError('Collect time must be after prepare time.');
+      _showError(l10n.validationCollectAfterPrepare);
       return;
     }
 
@@ -562,7 +611,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     if (_categoryDraft != TaskCategory.note) {
       final parsed = int.tryParse(_personsController.text.trim());
       if (parsed == null || parsed < 1) {
-        _showError('Persons count must be a number greater than 0.');
+        _showError(l10n.validationPersonsInvalid);
         return;
       }
       personsCount = parsed;
@@ -572,7 +621,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     if ((_categoryDraft == TaskCategory.drinks ||
             _categoryDraft == TaskCategory.foodSetup) &&
         orderedItems.isEmpty) {
-      _showError('Add at least one item.');
+      _showError(l10n.taskErrorAddItem);
       return;
     }
 
@@ -618,13 +667,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Task updated.')));
+    ).showSnackBar(SnackBar(content: Text(l10n.taskUpdated)));
   }
 
   Future<void> _confirmStatusChange({
     required TaskItem task,
     required TaskStatus nextStatus,
   }) async {
+    final l10n = context.l10n;
     if (task.status == nextStatus) {
       return;
     }
@@ -633,18 +683,21 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Save status change?'),
+          title: Text(l10n.taskSaveStatusChangeTitle),
           content: Text(
-            'Change status from ${task.status.label} to ${nextStatus.label}?',
+            l10n.taskChangeStatusMessage(
+              task.status.localizedLabel(l10n),
+              nextStatus.localizedLabel(l10n),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Save & close'),
+              child: Text(l10n.commonSaveClose),
             ),
           ],
         );
@@ -665,20 +718,21 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   Future<bool?> _showDeleteDialog(BuildContext context) {
+    final l10n = context.l10n;
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete task?'),
-          content: const Text('This action cannot be undone.'),
+          title: Text(l10n.aufgabenDeleteTaskTitle),
+          content: Text(l10n.aufgabenDeleteTaskBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
+              child: Text(l10n.commonDelete),
             ),
           ],
         );
@@ -744,31 +798,39 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       merged[id] = quantity > existing ? quantity : existing;
     }
 
-    if ((quantities['coffee'] ?? 0) > 0) {
-      mergeMax('cups', personsCount);
-      mergeMax('saucers', personsCount);
-      mergeMax('napkins', personsCount);
-    }
-
-    if ((quantities['tea'] ?? 0) > 0) {
-      mergeMax('cups', personsCount);
-      mergeMax('napkins', personsCount);
-    }
-
-    const softDrinkIds = {'juice', 'coca_cola', 'fanta', 'water'};
-    final hasSoftDrinks = quantities.entries.any(
-      (entry) => softDrinkIds.contains(entry.key) && entry.value > 0,
+    const coffeeIds = {'kaffee', 'coffee'};
+    final hasCoffee = quantities.entries.any(
+      (entry) => coffeeIds.contains(entry.key) && entry.value > 0,
     );
-    if (hasSoftDrinks) {
+    if (hasCoffee) {
+      mergeMax('cups', personsCount);
+      mergeMax('napkins', personsCount);
+    }
+
+    const teaIds = {'tee', 'tea'};
+    final hasTea = quantities.entries.any(
+      (entry) => teaIds.contains(entry.key) && entry.value > 0,
+    );
+    if (hasTea) {
+      mergeMax('cups', personsCount);
+      mergeMax('napkins', personsCount);
+    }
+
+    const waterIds = {
+      'sprudel_07',
+      'still_07',
+      'sprudel_025',
+      'still_025',
+      'water',
+    };
+    final hasWater = quantities.entries.any(
+      (entry) => waterIds.contains(entry.key) && entry.value > 0,
+    );
+    if (hasWater) {
       mergeMax('glasses', personsCount);
     }
 
-    const names = {
-      'cups': 'Cups',
-      'saucers': 'Saucers',
-      'napkins': 'Napkins',
-      'glasses': 'Glasses',
-    };
+    const names = {'cups': 'Cups', 'napkins': 'Napkins', 'glasses': 'Glasses'};
 
     final items = merged.entries
         .map(
@@ -789,19 +851,39 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     required List<DrinkOrderItem> orderedItems,
     required int? personsCount,
   }) {
+    final l10n = context.l10n;
     if (category == TaskCategory.note) {
-      return 'Note request';
+      return l10n.taskDescriptionNoteRequest;
     }
 
     if (orderedItems.isEmpty) {
-      return category.label;
+      return category.localizedLabel(l10n);
     }
 
-    final parts = orderedItems
-        .map((item) => '${item.quantity} ${item.name}')
-        .toList();
+    final parts = <String>[];
+    if (category == TaskCategory.drinks || category == TaskCategory.foodSetup) {
+      parts.add(
+        category == TaskCategory.drinks
+            ? l10n.taskDescriptionDrinks
+            : l10n.taskDescriptionFoodSetup,
+      );
+      final leadingItems = orderedItems
+          .take(2)
+          .map((item) => '${item.quantity} ${item.name}')
+          .join(' · ');
+      if (leadingItems.isNotEmpty) {
+        parts.add(leadingItems);
+      }
+      final remainingCount = orderedItems.length - 2;
+      if (remainingCount > 0) {
+        parts.add(l10n.taskMoreItems(remainingCount));
+      }
+    } else {
+      parts.addAll(orderedItems.map((item) => '${item.quantity} ${item.name}'));
+    }
+
     if (personsCount != null) {
-      parts.add('$personsCount persons');
+      parts.add(l10n.taskPersons(personsCount));
     }
     return parts.join(' · ');
   }
@@ -812,11 +894,29 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     switch (category) {
       case TaskCategory.drinks:
         return AppConstants.drinkDefinitions
-            .map((drink) => _EditableItemDefinition(drink.id, drink.name))
+            .map(
+              (drink) => _EditableItemDefinition(
+                drink.id,
+                localizedDrinkName(
+                  context.l10n,
+                  drink.id,
+                  fallback: drink.name,
+                ),
+              ),
+            )
             .toList();
       case TaskCategory.foodSetup:
         return AppConstants.foodSetupDefinitions
-            .map((item) => _EditableItemDefinition(item.id, item.name))
+            .map(
+              (item) => _EditableItemDefinition(
+                item.id,
+                localizedFoodSetupName(
+                  context.l10n,
+                  item.id,
+                  fallback: item.name,
+                ),
+              ),
+            )
             .toList();
       case TaskCategory.note:
       case TaskCategory.snacky:
@@ -829,6 +929,64 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _localizedItemName({
+    required AppLocalizations l10n,
+    required TaskCategory category,
+    required DrinkOrderItem item,
+  }) {
+    switch (category) {
+      case TaskCategory.drinks:
+        return localizedDrinkName(l10n, item.id, fallback: item.name);
+      case TaskCategory.foodSetup:
+        return localizedFoodSetupName(l10n, item.id, fallback: item.name);
+      case TaskCategory.note:
+      case TaskCategory.snacky:
+      case TaskCategory.others:
+        return item.name;
+    }
+  }
+
+  String _localizedSummaryText({
+    required AppLocalizations l10n,
+    required TaskItem task,
+  }) {
+    if (task.category != TaskCategory.drinks &&
+        task.category != TaskCategory.foodSetup) {
+      return task.shortDescription;
+    }
+
+    if (task.orderedDrinks.isEmpty) {
+      return task.shortDescription;
+    }
+
+    final localizedItems = task.orderedDrinks
+        .map(
+          (item) => item.copyWith(
+            name: _localizedItemName(
+              l10n: l10n,
+              category: task.category,
+              item: item,
+            ),
+          ),
+        )
+        .toList();
+
+    final leadingItems = localizedItems
+        .take(2)
+        .map((item) => '${item.quantity} ${item.name}')
+        .join(' · ');
+    final remainingCount = localizedItems.length - 2;
+    final parts = <String>[
+      task.category == TaskCategory.drinks
+          ? l10n.taskDescriptionDrinks
+          : l10n.taskDescriptionFoodSetup,
+      if (leadingItems.isNotEmpty) leadingItems,
+      if (remainingCount > 0) l10n.taskMoreItems(remainingCount),
+      if (task.personsCount != null) l10n.taskPersons(task.personsCount!),
+    ];
+    return parts.join(' · ');
   }
 }
 
@@ -859,6 +1017,33 @@ class _EditableTimeField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: labelText,
           suffixIcon: const Icon(Icons.schedule_outlined),
+        ),
+        child: Text(value),
+      ),
+    );
+  }
+}
+
+class _EditableDateField extends StatelessWidget {
+  const _EditableDateField({
+    required this.labelText,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String labelText;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: labelText,
+          suffixIcon: const Icon(Icons.calendar_today_outlined),
         ),
         child: Text(value),
       ),

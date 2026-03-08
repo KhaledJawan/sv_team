@@ -56,7 +56,26 @@ class NoteReserveInput {
 class ReserveToTaskMapper {
   ReserveToTaskMapper._();
 
-  static const _softDrinkIds = {'juice', 'coca_cola', 'fanta', 'water'};
+  static const _waterDrinkIds = {
+    'sprudel_07',
+    'still_07',
+    'sprudel_025',
+    'still_025',
+    // Backward compatibility for older data IDs.
+    'water',
+  };
+
+  static const _coffeeIds = {
+    'kaffee',
+    // Backward compatibility for older data IDs.
+    'coffee',
+  };
+
+  static const _teaIds = {
+    'tee',
+    // Backward compatibility for older data IDs.
+    'tea',
+  };
 
   static final Map<String, String> _drinkNameById = {
     for (final drink in AppConstants.drinkDefinitions) drink.id: drink.name,
@@ -83,10 +102,17 @@ class ReserveToTaskMapper {
       drinkQuantities: input.drinkQuantities,
     );
 
-    final summaryParts = orderedDrinks
+    final leadingItems = orderedDrinks
+        .take(2)
         .map((item) => '${item.quantity} ${item.name}')
-        .toList();
-    summaryParts.add('${input.personsCount} persons');
+        .join(' · ');
+    final remainingCount = orderedDrinks.length - 2;
+    final summaryParts = <String>[
+      'Drinks',
+      if (leadingItems.isNotEmpty) leadingItems,
+      if (remainingCount > 0) '+$remainingCount items',
+      '${input.personsCount} persons',
+    ];
 
     return TaskItem(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -176,29 +202,31 @@ class ReserveToTaskMapper {
       merged[id] = quantity > existing ? quantity : existing;
     }
 
-    final coffeeQuantity = drinkQuantities['coffee'] ?? 0;
-    if (coffeeQuantity > 0) {
-      mergeMax('cups', personsCount);
-      mergeMax('saucers', personsCount);
-      mergeMax('napkins', personsCount);
-    }
-
-    final teaQuantity = drinkQuantities['tea'] ?? 0;
-    if (teaQuantity > 0) {
-      mergeMax('cups', personsCount);
-      mergeMax('napkins', personsCount);
-    }
-
-    final hasSoftDrinks = drinkQuantities.entries.any(
-      (entry) => _softDrinkIds.contains(entry.key) && entry.value > 0,
+    final hasCoffee = drinkQuantities.entries.any(
+      (entry) => _coffeeIds.contains(entry.key) && entry.value > 0,
     );
-    if (hasSoftDrinks) {
+    if (hasCoffee) {
+      mergeMax('cups', personsCount);
+      mergeMax('napkins', personsCount);
+    }
+
+    final hasTea = drinkQuantities.entries.any(
+      (entry) => _teaIds.contains(entry.key) && entry.value > 0,
+    );
+    if (hasTea) {
+      mergeMax('cups', personsCount);
+      mergeMax('napkins', personsCount);
+    }
+
+    final hasWater = drinkQuantities.entries.any(
+      (entry) => _waterDrinkIds.contains(entry.key) && entry.value > 0,
+    );
+    if (hasWater) {
       mergeMax('glasses', personsCount);
     }
 
     const itemNames = {
       'cups': 'Cups',
-      'saucers': 'Saucers',
       'napkins': 'Napkins',
       'glasses': 'Glasses',
     };

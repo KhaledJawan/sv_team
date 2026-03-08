@@ -5,7 +5,8 @@ import '../../../core/constants/app_constants.dart';
 
 class ReserveFormState {
   const ReserveFormState({
-    required this.selectedRoomId,
+    required this.roomNameInput,
+    required this.selectedDate,
     required this.selectedPrepareTime,
     required this.selectedCollectTime,
     required this.personsInput,
@@ -14,7 +15,8 @@ class ReserveFormState {
 
   factory ReserveFormState.initial() {
     return ReserveFormState(
-      selectedRoomId: null,
+      roomNameInput: '',
+      selectedDate: _dateOnly(DateTime.now()),
       selectedPrepareTime: null,
       selectedCollectTime: null,
       personsInput: '1',
@@ -24,7 +26,8 @@ class ReserveFormState {
     );
   }
 
-  final String? selectedRoomId;
+  final String roomNameInput;
+  final DateTime selectedDate;
   final TimeOfDay? selectedPrepareTime;
   final TimeOfDay? selectedCollectTime;
   final String personsInput;
@@ -42,7 +45,8 @@ class ReserveFormState {
       drinkQuantities.values.any((quantity) => quantity > 0);
 
   ReserveFormState copyWith({
-    String? selectedRoomId,
+    String? roomNameInput,
+    DateTime? selectedDate,
     TimeOfDay? selectedPrepareTime,
     bool clearPrepareTime = false,
     TimeOfDay? selectedCollectTime,
@@ -51,7 +55,8 @@ class ReserveFormState {
     Map<String, int>? drinkQuantities,
   }) {
     return ReserveFormState(
-      selectedRoomId: selectedRoomId ?? this.selectedRoomId,
+      roomNameInput: roomNameInput ?? this.roomNameInput,
+      selectedDate: selectedDate ?? this.selectedDate,
       selectedPrepareTime: clearPrepareTime
           ? null
           : selectedPrepareTime ?? this.selectedPrepareTime,
@@ -68,8 +73,12 @@ class ReserveFormNotifier extends Notifier<ReserveFormState> {
   @override
   ReserveFormState build() => ReserveFormState.initial();
 
-  void setRoom(String? roomId) {
-    state = state.copyWith(selectedRoomId: roomId);
+  void setRoomName(String value) {
+    state = state.copyWith(roomNameInput: value);
+  }
+
+  void setDate(DateTime date) {
+    state = state.copyWith(selectedDate: _dateOnly(date));
   }
 
   void setPrepareTime(TimeOfDay time) {
@@ -113,3 +122,7 @@ final reserveFormProvider =
     NotifierProvider<ReserveFormNotifier, ReserveFormState>(
       ReserveFormNotifier.new,
     );
+
+DateTime _dateOnly(DateTime value) {
+  return DateTime(value.year, value.month, value.day);
+}

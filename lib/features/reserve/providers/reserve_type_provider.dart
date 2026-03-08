@@ -1,16 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 enum ReserveRequestType { drinks, foodSetup, note }
 
 extension ReserveRequestTypePresentation on ReserveRequestType {
-  String get label {
+  String localizedLabel(AppLocalizations l10n) {
     switch (this) {
       case ReserveRequestType.drinks:
-        return 'Drinks';
+        return l10n.reserveTypeDrinks;
       case ReserveRequestType.foodSetup:
-        return 'Food Setup';
+        return l10n.reserveTypeFoodSetup;
       case ReserveRequestType.note:
-        return 'Note';
+        return l10n.reserveTypeNote;
     }
   }
 }

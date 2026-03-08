@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/extensions/date_time_extension.dart';
+import '../../../core/localization/app_localizations_x.dart';
 import '../../../models/task_category.dart';
 import '../../../models/task_item.dart';
 import '../../../models/task_status.dart';
@@ -23,14 +24,18 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final hasCollectTime = task.category != TaskCategory.snacky;
     final collectIsBold = task.status == TaskStatus.prepared;
     final showCollectAsPrimary = hasCollectTime && collectIsBold;
+    final primaryDateTime = showCollectAsPrimary
+        ? task.collectTime
+        : task.prepareTime;
     final baseCollectStyle =
         Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
     final peopleSummary = task.personsCount != null
-        ? '${task.personsCount} persons'
-        : 'No persons count';
+        ? l10n.taskPersons(task.personsCount!)
+        : l10n.taskNoPersonsCount;
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -67,9 +72,16 @@ class TaskCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
+                              primaryDateTime.ddMmYyyyOrTodayLabel(
+                                l10n.commonToday,
+                              ),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
                               showCollectAsPrimary
-                                  ? 'Collect ${task.collectTime.hhMm}'
-                                  : 'Prep ${task.prepareTime.hhMm}',
+                                  ? l10n.taskCollectAt(task.collectTime.hhMm)
+                                  : l10n.taskPrepAt(task.prepareTime.hhMm),
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
@@ -77,8 +89,8 @@ class TaskCard extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 showCollectAsPrimary
-                                    ? 'Prep ${task.prepareTime.hhMm}'
-                                    : 'Collect ${task.collectTime.hhMm}',
+                                    ? l10n.taskPrepAt(task.prepareTime.hhMm)
+                                    : l10n.taskCollectAt(task.collectTime.hhMm),
                                 style: baseCollectStyle.copyWith(
                                   fontWeight: collectIsBold
                                       ? FontWeight.w700
@@ -113,22 +125,22 @@ class TaskCard extends StatelessWidget {
                 ),
               ),
               PopupMenuButton<TaskCardMenuAction>(
-                tooltip: 'Task actions',
+                tooltip: l10n.taskActionsTooltip,
                 position: PopupMenuPosition.under,
                 icon: const Icon(Icons.more_vert, color: Color(0xFF7B7B82)),
                 onSelected: onMenuAction,
-                itemBuilder: (context) => const [
+                itemBuilder: (context) => [
                   PopupMenuItem(
                     value: TaskCardMenuAction.openEdit,
-                    child: Text('Edit / Open'),
+                    child: Text(l10n.taskActionsOpenEdit),
                   ),
                   PopupMenuItem(
                     value: TaskCardMenuAction.changeStatus,
-                    child: Text('Change status'),
+                    child: Text(l10n.taskActionsChangeStatus),
                   ),
                   PopupMenuItem(
                     value: TaskCardMenuAction.delete,
-                    child: Text('Delete'),
+                    child: Text(l10n.commonDelete),
                   ),
                 ],
               ),

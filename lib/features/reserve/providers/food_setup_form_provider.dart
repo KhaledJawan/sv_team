@@ -5,7 +5,8 @@ import '../../../core/constants/app_constants.dart';
 
 class FoodSetupFormState {
   const FoodSetupFormState({
-    required this.selectedRoomId,
+    required this.roomNameInput,
+    required this.selectedDate,
     required this.selectedPrepareTime,
     required this.selectedCollectTime,
     required this.personsInput,
@@ -14,7 +15,8 @@ class FoodSetupFormState {
 
   factory FoodSetupFormState.initial() {
     return FoodSetupFormState(
-      selectedRoomId: null,
+      roomNameInput: '',
+      selectedDate: _dateOnly(DateTime.now()),
       selectedPrepareTime: null,
       selectedCollectTime: null,
       personsInput: '1',
@@ -24,7 +26,8 @@ class FoodSetupFormState {
     );
   }
 
-  final String? selectedRoomId;
+  final String roomNameInput;
+  final DateTime selectedDate;
   final TimeOfDay? selectedPrepareTime;
   final TimeOfDay? selectedCollectTime;
   final String personsInput;
@@ -41,7 +44,8 @@ class FoodSetupFormState {
   bool get hasAnyItem => itemQuantities.values.any((quantity) => quantity > 0);
 
   FoodSetupFormState copyWith({
-    String? selectedRoomId,
+    String? roomNameInput,
+    DateTime? selectedDate,
     TimeOfDay? selectedPrepareTime,
     bool clearPrepareTime = false,
     TimeOfDay? selectedCollectTime,
@@ -50,7 +54,8 @@ class FoodSetupFormState {
     Map<String, int>? itemQuantities,
   }) {
     return FoodSetupFormState(
-      selectedRoomId: selectedRoomId ?? this.selectedRoomId,
+      roomNameInput: roomNameInput ?? this.roomNameInput,
+      selectedDate: selectedDate ?? this.selectedDate,
       selectedPrepareTime: clearPrepareTime
           ? null
           : selectedPrepareTime ?? this.selectedPrepareTime,
@@ -67,8 +72,12 @@ class FoodSetupFormNotifier extends Notifier<FoodSetupFormState> {
   @override
   FoodSetupFormState build() => FoodSetupFormState.initial();
 
-  void setRoom(String? roomId) {
-    state = state.copyWith(selectedRoomId: roomId);
+  void setRoomName(String value) {
+    state = state.copyWith(roomNameInput: value);
+  }
+
+  void setDate(DateTime date) {
+    state = state.copyWith(selectedDate: _dateOnly(date));
   }
 
   void setPrepareTime(TimeOfDay time) {
@@ -112,3 +121,7 @@ final foodSetupFormProvider =
     NotifierProvider<FoodSetupFormNotifier, FoodSetupFormState>(
       FoodSetupFormNotifier.new,
     );
+
+DateTime _dateOnly(DateTime value) {
+  return DateTime(value.year, value.month, value.day);
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/extensions/date_time_extension.dart';
+import '../../core/localization/app_localizations_x.dart';
 import '../../shared/widgets/app_card.dart';
 import '../../shared/widgets/empty_state.dart';
 import 'providers/notifications_provider.dart';
@@ -25,25 +26,26 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final notifications = ref.watch(notificationsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(l10n.notificationsTitle),
         actions: [
           if (notifications.isNotEmpty)
             TextButton(
               onPressed: () =>
                   ref.read(notificationsProvider.notifier).clearAll(),
-              child: const Text('Clear all'),
+              child: Text(l10n.notificationsClearAll),
             ),
         ],
       ),
       body: notifications.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.notifications_none_rounded,
-              title: 'No notifications',
-              subtitle: 'Task updates will appear here.',
+              title: l10n.notificationsEmptyTitle,
+              subtitle: l10n.notificationsEmptySubtitle,
             )
           : ListView.separated(
               physics: const BouncingScrollPhysics(
@@ -98,7 +100,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'By ${item.actorName}',
+                              l10n.notificationsByActor(item.actorName),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
@@ -111,7 +113,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               .delete(item.id);
                         },
                         icon: const Icon(Icons.close, size: 18),
-                        tooltip: 'Remove',
+                        tooltip: l10n.notificationsRemoveTooltip,
                       ),
                     ],
                   ),

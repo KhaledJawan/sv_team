@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_localizations_x.dart';
 import '../../models/task_status.dart';
 
 class StatusIndicator extends StatelessWidget {
@@ -9,6 +10,8 @@ class StatusIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -21,7 +24,10 @@ class StatusIndicator extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(status.label, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          status.localizedLabel(l10n),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }
