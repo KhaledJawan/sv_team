@@ -91,7 +91,6 @@ class _DrinksReserveForm extends ConsumerWidget {
               ReserveSectionHeader(title: l10n.reserveDrinksRequestTitle),
               const SizedBox(height: 10),
               TextFormField(
-                key: ValueKey('drinks_room_name_${formState.roomNameInput}'),
                 initialValue: formState.roomNameInput,
                 decoration: InputDecoration(labelText: l10n.commonRoom),
                 onChanged: (value) {
@@ -323,7 +322,6 @@ class _FoodSetupReserveForm extends ConsumerWidget {
               ReserveSectionHeader(title: l10n.reserveFoodSetupRequestTitle),
               const SizedBox(height: 10),
               TextFormField(
-                key: ValueKey('setup_room_name_${formState.roomNameInput}'),
                 initialValue: formState.roomNameInput,
                 decoration: InputDecoration(labelText: l10n.commonRoom),
                 onChanged: (value) {

@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/snacky_session_repository.dart';
 import '../models/direct_sell_models.dart';
 
 class DirectSellSessionNotifier extends Notifier<DirectSellSessionState> {
   @override
-  DirectSellSessionState build() => DirectSellSessionState.initial();
+  DirectSellSessionState build() {
+    final persisted = ref.read(snackySessionRepositoryProvider).loadSession();
+    return persisted ?? DirectSellSessionState.initial();
+  }
 
   double unitPriceOf(String itemId) {
     return state.unitPrices[itemId] ?? 0;
@@ -43,14 +49,14 @@ class DirectSellSessionNotifier extends Notifier<DirectSellSessionState> {
   bool get canOpenCashier => state.hasAnyStockConfigured;
 
   void setStep(DirectSellStep step) {
-    state = state.copyWith(step: step);
+    _setState(state.copyWith(step: step));
   }
 
   String? moveToCashier() {
     if (!canOpenCashier) {
       return 'Add at least one item quantity before continuing.';
     }
-    state = state.copyWith(step: DirectSellStep.cashier);
+    _setState(state.copyWith(step: DirectSellStep.cashier));
     return null;
   }
 
@@ -58,20 +64,20 @@ class DirectSellSessionNotifier extends Notifier<DirectSellSessionState> {
     if (state.basketQuantities.values.any((quantity) => quantity > 0)) {
       return 'Finish payment or clear basket before closing the session.';
     }
-    state = state.copyWith(step: DirectSellStep.summary);
+    _setState(state.copyWith(step: DirectSellStep.summary));
     return null;
   }
 
   void backToStock() {
-    state = state.copyWith(step: DirectSellStep.stockSetup);
+    _setState(state.copyWith(step: DirectSellStep.stockSetup));
   }
 
   void backToCashier() {
-    state = state.copyWith(step: DirectSellStep.cashier);
+    _setState(state.copyWith(step: DirectSellStep.cashier));
   }
 
   void resetSession() {
-    state = DirectSellSessionState.initial();
+    _setState(DirectSellSessionState.initial());
   }
 
   void setStartingQuantity(String itemId, int quantity) {
@@ -83,7 +89,7 @@ class DirectSellSessionNotifier extends Notifier<DirectSellSessionState> {
 
     final updated = Map<String, int>.from(state.startingQuantities);
     updated[itemId] = correctedQuantity;
-    state = state.copyWith(startingQuantities: updated);
+    _setState(state.copyWith(startingQuantities: updated));
 
     final maxBasketAllowed = availableToAddToBasket(itemId);
     if (maxBasketAllowed == 0 && basketQuantityOf(itemId) > 0) {
@@ -102,7 +108,7 @@ class DirectSellSessionNotifier extends Notifier<DirectSellSessionState> {
   void setUnitPrice(String itemId, double value) {
     final updated = Map<String, double>.from(state.unitPrices);
     updated[itemId] = value;
-    state = state.copyWith(unitPrices: updated);
+    _setState(state.copyWith(unitPrices: updated));
   }
 
   void addItemToBasket(String itemId) {
@@ -134,11 +140,11 @@ class DirectSellSessionNotifier extends Notifier<DirectSellSessionState> {
       updated[itemId] = correctedQuantity;
     }
 
-    state = state.copyWith(basketQuantities: updated);
+    _setState(state.copyWith(basketQuantities: updated));
   }
 
   void clearBasket() {
-    state = state.copyWith(basketQuantities: const <String, int>{});
+    _setState(state.copyWith(basketQuantities: const <String, int>{}));
   }
 
   String? confirmPayment({required double paidAmount}) {
@@ -186,13 +192,20 @@ class DirectSellSessionNotifier extends Notifier<DirectSellSessionState> {
       ),
     );
 
-    state = state.copyWith(
-      soldQuantities: soldQuantities,
-      sales: updatedSales,
-      basketQuantities: const <String, int>{},
+    _setState(
+      state.copyWith(
+        soldQuantities: soldQuantities,
+        sales: updatedSales,
+        basketQuantities: const <String, int>{},
+      ),
     );
 
     return null;
+  }
+
+  void _setState(DirectSellSessionState nextState) {
+    state = nextState;
+    unawaited(ref.read(snackySessionRepositoryProvider).saveSession(nextState));
   }
 }
 
